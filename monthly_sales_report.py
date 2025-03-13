@@ -4,8 +4,8 @@ import pandas as pd
 import zipfile
 from dbfread import DBF
 
-LOCAL_DOWNLOAD_PATH = "./data/"
-LOCAL_EXTRACT_PATH = "./extracted/"
+LOCAL_DOWNLOAD_PATH = "/tmp/data/"
+LOCAL_EXTRACT_PATH = "/tmp/extracted/"
 REPORT_PATH = "./reports/monthly_sales_report.csv"
 
 def extract_zip_files(zip_dir, extract_to):
