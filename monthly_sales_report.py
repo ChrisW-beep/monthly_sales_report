@@ -71,20 +71,7 @@ def process_store_data(store_id, folder_path):
         # Fallback: store_name could just be the store_id if not found in STR
         store_name = store_id
 
-    # ----- Example of how to join JNL + JNH + CAT -----
-    # We'll guess the fields used for joining. Typically:
-    #  - JNH might have a header/transaction-level key (e.g. "DOC_NUM" or "TRANS_ID")
-    #  - JNL might have line-level detail referencing the same key
-    #  - JNL might also store the "cat" code which references CAT.
-    #
-    # Adjust the join keys and field names below to match your actual DBF structure.
-
-    # Suppose JNH has a key "DOC_NUM" that JNL references via "DOC_NUM",
-    # and JNL has a category field "CAT_CODE" that references CAT.
-    # Then cat.dbf might have "CODE" and "NAME" columns. We want only cat.code == 'N' rows.
-
-    # 1) Merge JNL <---> JNH on shared doc number
-    # (Left join so we keep all JNL lines, but also get the date from JNH.)
+ 
     if not df_jnh.empty and not df_jnl.empty:
         # rename columns as needed
         # Example fields:
