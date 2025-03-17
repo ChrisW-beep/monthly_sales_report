@@ -107,8 +107,8 @@ def process_store_data(store_id, folder_path):
         df_merged
         .groupby(["DATE", "NAME"], dropna=False)
         .agg(
-            sale_amount=("AMT", "sum"),  # or ("PRICE", "sum") if your column is PRICE
-            sale_count=("AMT", "count")  # or ("PRICE", "count")
+            sale_amount=("PRICE", "sum"),  # or ("PRICE", "sum") if your column is PRICE
+            sale_count=("PRICE", "count")  # or ("PRICE", "count")
         )
         .reset_index()
     )
