@@ -5,15 +5,54 @@ from dbfread import DBF
 LOCAL_UNZIPPED_BASE = "/tmp/extracted/6045/Data"  # Hard-coded path
 REPORT_PATH = "./reports/monthly_sales_report.csv"
 
-def read_dbf_to_df(dbf_path):
+import os
+import pandas as pd
+from dbfread import DBF
+
+def find_dbf_filename(folder_path, base_name):
     """
-    Reads a DBF file into a DataFrame. Returns empty if missing.
+    Searches `folder_path` for a file whose name (ignoring case)
+    matches `base_name + ".dbf"`.
+    e.g. if base_name="str", we look for "str.dbf" in any case: STR.DBF, sTr.Dbf, etc.
+
+    Returns the actual file name if found (e.g. "STR.DBF"), else None.
     """
-    if not os.path.isfile(dbf_path):
-        print(f"Warning: Missing DBF: {dbf_path}")
+    target = (base_name + ".dbf").lower()  # e.g. "str.dbf"
+    if not os.path.isdir(folder_path):
+        return None
+
+    for fname in os.listdir(folder_path):
+        if fname.lower() == target:
+            return fname  # e.g. "STR.DBF"
+    return None
+
+def read_dbf_to_df(folder_path, base_name):
+    """
+    Combines find_dbf_filename + dbfread to read the DBF, ignoring case.
+    Returns a DataFrame (empty if file not found).
+    """
+    dbf_file = find_dbf_filename(folder_path, base_name)
+    if not dbf_file:
+        print(f"Warning: Could not find {base_name}.dbf (any case) in {folder_path}")
         return pd.DataFrame()
+
+    dbf_path = os.path.join(folder_path, dbf_file)
+    if not os.path.isfile(dbf_path):
+        print(f"Warning: DBF file missing: {dbf_path}")
+        return pd.DataFrame()
+
     table = DBF(dbf_path, load=True)
     return pd.DataFrame(iter(table))
+
+# Example usage
+if __name__ == "__main__":
+    folder_path = "/tmp/extracted/6045/Data"  # for example
+    df_str = read_dbf_to_df(folder_path, "str")  # finds str.dbf or STR.DBF etc.
+    df_jnl = read_dbf_to_df(folder_path, "jnl")  # finds jnl.dbf or JNL.DBF etc.
+
+    print("STR rows:", len(df_str))
+    print("JNL rows:", len(df_jnl))
+
 
 def normalize_column(df, target_name):
     """
