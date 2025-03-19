@@ -2,12 +2,8 @@ import os
 import pandas as pd
 from dbfread import DBF
 
-LOCAL_UNZIPPED_BASE = "/tmp/extracted/6045/Data"  # Hard-coded path
+LOCAL_UNZIPPED_BASE = "/tmp/extracted/6045/Data"  # Hard-coded path for single-store test
 REPORT_PATH = "./reports/monthly_sales_report.csv"
-
-import os
-import pandas as pd
-from dbfread import DBF
 
 def find_dbf_filename(folder_path, base_name):
     """
@@ -17,7 +13,7 @@ def find_dbf_filename(folder_path, base_name):
 
     Returns the actual file name if found (e.g. "STR.DBF"), else None.
     """
-    target = (base_name + ".dbf").lower()  # e.g. "str.dbf"
+    target = (base_name + ".dbf").lower()
     if not os.path.isdir(folder_path):
         return None
 
@@ -44,16 +40,6 @@ def read_dbf_to_df(folder_path, base_name):
     table = DBF(dbf_path, load=True)
     return pd.DataFrame(iter(table))
 
-# Example usage
-if __name__ == "__main__":
-    folder_path = "/tmp/extracted/6045/Data"  # for example
-    df_str = read_dbf_to_df(folder_path, "str")  # finds str.dbf or STR.DBF etc.
-    df_jnl = read_dbf_to_df(folder_path, "jnl")  # finds jnl.dbf or JNL.DBF etc.
-
-    print("STR rows:", len(df_str))
-    print("JNL rows:", len(df_jnl))
-
-
 def normalize_column(df, target_name):
     """
     If df has a column whose .lower() matches target_name.lower(),
@@ -67,13 +53,12 @@ def normalize_column(df, target_name):
 
 def process_store_data(store_id, folder_path):
     """
-    1) Reads str.dbf and jnl.dbf from 'folder_path'
-    2) Merges & groups line 950/980 pairs by date + Type
-    3) Returns a DataFrame with columns [Astoreid, Storename, date, Type, sale_amount, sale_count, currency]
+    Reads str.dbf and jnl.dbf (case-insensitive) from folder_path.
+    Merges line 950/980 pairs by date + Type, returns a DataFrame with:
+      [Astoreid, Storename, date, Type, sale_amount, sale_count, currency]
     """
     df_str = read_dbf_to_df(folder_path, "str")
     df_jnl = read_dbf_to_df(folder_path, "jnl")
-
 
     # Store name
     if not df_str.empty and "NAME" in df_str.columns:
@@ -85,13 +70,13 @@ def process_store_data(store_id, folder_path):
         print(f"Warning: No jnl data for store {store_id}.")
         return pd.DataFrame(columns=["Astoreid","Storename","date","Type","sale_amount","sale_count","currency"])
 
-    # Normalize "Line", "Price", "Descript", "Date"
+    # Normalize columns: "Line", "Price", "Descript", "Date"
     found_line     = normalize_column(df_jnl, "Line")
     found_price    = normalize_column(df_jnl, "Price")
     found_descript = normalize_column(df_jnl, "Descript")
     found_date     = normalize_column(df_jnl, "Date")
 
-    # If missing, create fallback columns
+    # Create fallback columns if missing
     if not found_line:
         print(f"Warning: 'Line' column missing for store {store_id}. {df_jnl.columns.tolist()}")
         df_jnl["Line"] = None
@@ -106,7 +91,7 @@ def process_store_data(store_id, folder_path):
         df_jnl["Date"] = None
 
     # Convert "Line" to string, "Price" to numeric
-    df_jnl["Line"] = df_jnl["Line"].astype(str)
+    df_jnl["Line"]  = df_jnl["Line"].astype(str)
     df_jnl["Price"] = pd.to_numeric(df_jnl["Price"], errors="coerce").fillna(0)
 
     # Convert date to YYYY-MM-DD if possible
@@ -125,9 +110,9 @@ def process_store_data(store_id, folder_path):
     # Build pairs from consecutive (950->980) lines
     pairs = []
     for i in range(len(df_jnl) - 1):
-        line_val = df_jnl.loc[i, "Line"]
-        price_val= df_jnl.loc[i, "Price"]
-        date_val = df_jnl.loc[i, "Date"]
+        line_val = df_jnl.loc[i,   "Line"]
+        price_val= df_jnl.loc[i,   "Price"]
+        date_val = df_jnl.loc[i,   "Date"]
         line_next= df_jnl.loc[i+1, "Line"]
         desc_next= df_jnl.loc[i+1, "Descript"]
 
@@ -171,18 +156,17 @@ def process_store_data(store_id, folder_path):
 def main():
     os.makedirs(os.path.dirname(REPORT_PATH), exist_ok=True)
 
-    # Hard-coded store ID & path (just for a single store test)
+    # Hard-coded store ID & path (for single-store test)
     store_id = "6045"
     folder_path = LOCAL_UNZIPPED_BASE
 
-    # Process the DBFs directly
     df_store = process_store_data(store_id, folder_path)
     if df_store.empty:
         final_df = pd.DataFrame(columns=["Astoreid","Storename","date","Type","sale_amount","sale_count","currency"])
     else:
         final_df = df_store
 
-    # (Optional) If you want to filter by the current month
+    # Optional: filter by current month
     current_year = os.environ.get("YEAR")
     current_month = os.environ.get("MONTH")
     if current_year and current_month and "date" in final_df.columns:
