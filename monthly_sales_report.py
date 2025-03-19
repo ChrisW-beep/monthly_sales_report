@@ -32,11 +32,9 @@ def process_store_data(store_id, folder_path):
     2) Merges & groups line 950/980 pairs by date + Type
     3) Returns a DataFrame with columns [Astoreid, Storename, date, Type, sale_amount, sale_count, currency]
     """
-    str_dbf = os.path.join(folder_path, "str.dbf")
-    jnl_dbf = os.path.join(folder_path, "jnl.dbf")
+    df_str = read_dbf_to_df(folder_path, "str")
+    df_jnl = read_dbf_to_df(folder_path, "jnl")
 
-    df_str = read_dbf_to_df(str_dbf)
-    df_jnl = read_dbf_to_df(jnl_dbf)
 
     # Store name
     if not df_str.empty and "NAME" in df_str.columns:
