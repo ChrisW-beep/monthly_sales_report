@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from dbfread import DBF
 
-LOCAL_UNZIPPED_BASE = "/tmp/extracted/6045/"
+LOCAL_UNZIPPED_BASE = "/tmp/extracted/6045/Data"
 REPORT_PATH = "./reports/monthly_sales_report.csv"
 
 
