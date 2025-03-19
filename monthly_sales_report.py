@@ -5,6 +5,36 @@ from dbfread import DBF
 LOCAL_UNZIPPED_BASE = "/tmp/extracted/6045/Data"  # Hard-coded path for single-store test
 REPORT_PATH = "./reports/monthly_sales_report.csv"
 
+
+def process_dbf_in_chunks(dbf_path, chunk_size=10000):
+    # Accumulate partial results in smaller DataFrames or direct to CSV
+    partial_results = []
+    current_batch = []
+    count = 0
+
+    for record in DBF(dbf_path):
+        current_batch.append(record)
+        count += 1
+        if count % chunk_size == 0:
+            df_batch = pd.DataFrame(current_batch)
+            # do merges, filters, etc. on df_batch
+            partial_results.append(df_batch)
+            current_batch = []
+
+    # last partial
+    if current_batch:
+        df_batch = pd.DataFrame(current_batch)
+        partial_results.append(df_batch)
+
+    # Now combine partial_results in a memory-friendly way
+    if partial_results:
+        final_df = pd.concat(partial_results, ignore_index=True)
+    else:
+        final_df = pd.DataFrame()
+
+    return final_df
+
+
 def find_dbf_filename(folder_path, base_name):
     """
     Searches `folder_path` for a file whose name (ignoring case)
